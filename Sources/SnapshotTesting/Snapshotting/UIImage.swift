@@ -182,12 +182,17 @@
     let width = max(old.size.width, new.size.width)
     let height = max(old.size.height, new.size.height)
     let scale = max(old.scale, new.scale)
-    UIGraphicsBeginImageContextWithOptions(CGSize(width: width, height: height), true, scale)
-    new.draw(at: .zero)
-    old.draw(at: .zero, blendMode: .difference, alpha: 1)
-    let differenceImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-    return differenceImage
+
+    let filter = CIDifferenceHighlightFilter()
+    filter.inputImage = CIImage(image: new)
+    filter.backgroundImage = CIImage(image: old)
+    filter.threshold = 1.0 / 255
+
+    let outputImage = filter.outputImage!
+    let context = CIContext()
+    let cgImage = context.createCGImage(outputImage, from: outputImage.extent)
+
+    return UIImage(cgImage: cgImage!, scale: scale, orientation: old.imageOrientation)
   }
 #endif
 
