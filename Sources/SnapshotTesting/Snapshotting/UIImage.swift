@@ -174,7 +174,13 @@
       )
     else { return nil }
 
-    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+    // Strip the source image's color profile to prevent CoreGraphics from applying
+    // color space conversion when drawing. This ensures images with identical RGB values
+    // compare as equal, regardless of whether they have an embedded color profile.
+    // This is important when reference images have been processed by tools like pngcrush
+    // that strip color profiles.
+    let normalizedImage = cgImage.copy(colorSpace: colorSpace) ?? cgImage
+    context.draw(normalizedImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
     return context
   }
 
