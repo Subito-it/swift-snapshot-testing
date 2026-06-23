@@ -131,8 +131,8 @@
     }
     if perceptualPrecision < 1, #available(iOS 11.0, tvOS 11.0, *) {
       return perceptuallyCompare(
-        CIImage(cgImage: oldCgImage),
-        CIImage(cgImage: newCgImage),
+        CIImage(cgImage: normalizedForComparison(oldCgImage)),
+        CIImage(cgImage: normalizedForComparison(newCgImage)),
         pixelPrecision: precision,
         perceptualPrecision: perceptualPrecision
       )
@@ -173,8 +173,23 @@
       )
     else { return nil }
 
-    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+    context.draw(
+      normalizedForComparison(cgImage),
+      in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
+    )
     return context
+  }
+
+  // Re-tag the image into the fixed comparison color space (sRGB) so that two
+  // images with identical RGB values compare as equal regardless of whether
+  // they carry an embedded color profile. Used by BOTH the byte-level compare
+  // (via `context(for:)`) and the perceptual compare (`perceptuallyCompare`),
+  // so the two paths agree. Without this, a reference whose profile was stripped
+  // by pngcrush/oxipng and a freshly-rendered image in the device color space
+  // differ by a small per-glyph ΔE and fail perceptual precision.
+  private func normalizedForComparison(_ cgImage: CGImage) -> CGImage {
+    guard let colorSpace = imageContextColorSpace else { return cgImage }
+    return cgImage.copy(colorSpace: colorSpace) ?? cgImage
   }
 
   private func diff(_ old: UIImage, _ new: UIImage) -> UIImage {
