@@ -991,11 +991,7 @@
           addImagesForRenderedViews(view).sequence().run { views in
             callback(
               renderer(bounds: view.bounds, for: traits).image { ctx in
-                if drawHierarchyInKeyWindow {
-                  view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
-                } else {
-                  view.layer.render(in: ctx.cgContext)
-                }
+                view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
               }
             )
             views.forEach { $0.removeFromSuperview() }
